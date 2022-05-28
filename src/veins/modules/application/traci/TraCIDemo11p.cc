@@ -53,16 +53,22 @@ void TraCIDemo11p::onWSA(DemoServiceAdvertisment* wsa)
 void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
 {
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
-
-    findHost()->getDisplayString().setTagArg("i", 1, "green");
-
-    if (mobility->getRoadId()[0] != ':') traciVehicle->changeRoute(wsm->getDemoData(), 9999);
-    if (!sentMessage) {
-        sentMessage = true;
-        // repeat the received traffic update once in 2 seconds plus some random delay
-        wsm->setSenderAddress(myId);
-        wsm->setSerial(3);
-        scheduleAt(simTime() + 2 + uniform(0.01, 0.2), wsm->dup());
+    std::cout << "## Recebi a mensagem: " << wsm->getDemoData() << " do node: " << wsm->getSenderAddress() << " no tempo: " << simTime() << endl;
+    std::cout << "## A mensagem é para o node: " << wsm->getSerial() << endl;
+    if ( myId == wsm->getSerial() ) {
+        std::cout << "## Sou o node " << myId << " e recebi a mensagem" << endl;
+    } else if ( simTime() > 155.001 ){
+        std::cout << "######## Acabou o tempo " << endl;
+        return;
+    } else {
+        TraCIDemo11pMessage* wsmNew = new TraCIDemo11pMessage();
+        populateWSM(wsmNew, -1);
+        wsmNew->setSerial(12);
+        wsmNew->setSenderAddress(myId);
+        std::string dado = "Mensagem para o node 12";
+        wsmNew->setDemoData(dado.c_str());
+        sendDown(wsmNew);
+        std::cout << "## Tentando reencaminhar para o node " << wsmNew->getSerial() << endl;
     }
 }
 
@@ -90,30 +96,16 @@ void TraCIDemo11p::handleSelfMsg(cMessage* msg)
 void TraCIDemo11p::handlePositionUpdate(cObject* obj)
 {
     DemoBaseApplLayer::handlePositionUpdate(obj);
-
-    // stopped for for at least 10s?
-    if (mobility->getSpeed() < 1) {
-        if (simTime() - lastDroveAt >= 10 && sentMessage == false) {
-            findHost()->getDisplayString().setTagArg("i", 1, "red");
-            sentMessage = true;
-
+    if (simTime() == 155) {
+        if (myId == 28) {
             TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
-            populateWSM(wsm);
-            wsm->setDemoData(mobility->getRoadId().c_str());
-
-            // host is standing still due to crash
-            if (dataOnSch) {
-                startService(Channel::sch2, 42, "Traffic Information Service");
-                // started service and server advertising, schedule message to self to send later
-                scheduleAt(computeAsynchronousSendingTime(1, ChannelType::service), wsm);
-            }
-            else {
-                // send right away on CCH, because channel switching is disabled
-                sendDown(wsm);
-            }
+            populateWSM(wsm, -1);
+            wsm->setSerial(12);
+            wsm->setSenderAddress(myId);
+            std::string dado = "Mensagem para o node 12";
+            wsm->setDemoData(dado.c_str());
+            sendDown(wsm);
+            std::cout << "## Enviado a mensagem para o 12" << endl;
         }
-    }
-    else {
-        lastDroveAt = simTime();
     }
 }

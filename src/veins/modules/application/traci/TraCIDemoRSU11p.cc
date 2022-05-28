@@ -40,6 +40,20 @@ void TraCIDemoRSU11p::onWSM(BaseFrame1609_4* frame)
 {
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
-    // this rsu repeats the received traffic update in 2 seconds plus some random delay
-    sendDelayedDown(wsm->dup(), 2 + uniform(0.01, 0.2));
+    if ( myId == wsm->getSerial() ) {
+            std::cout << "###### Sou o node " << myId << " e recebi a mensagem ######" << endl;
+    }
+    //std::cout << "## Recebi a mensagem: " << wsm->getDemoData() << " do node: " << wsm->getSenderAddress() << " no tempo: " << simTime() << endl;
+    //for (int i = 0; i < 100000000; i++) {
+    //    if (i%10000000 == 0) {
+    //        std::cout << "## Processando tarefa" << endl;
+    //    }
+    //}
+    //std::cout << "## Enviando tarefa processada para " << wsm->getSenderAddress() << endl;
+    //TraCIDemo11pMessage* message = new TraCIDemo11pMessage();
+    //populateWSM(message, 28);
+    //message->setSenderAddress(myId);
+    //std::string dado = "Tarefa processada";
+    //message->setDemoData(dado.c_str());
+    //sendDown(message);
 }
