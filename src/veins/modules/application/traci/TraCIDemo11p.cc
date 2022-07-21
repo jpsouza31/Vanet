@@ -28,6 +28,26 @@ using namespace veins;
 
 Define_Module(veins::TraCIDemo11p);
 
+TraCIDemo11pMessage* TraCIDemo11p::createMessage (int to, int senderId, std::string dado) {
+    TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
+    populateWSM(wsm, -1);
+    wsm->setSerial(to);
+    wsm->setSenderAddress(senderId);
+    wsm->setDemoData(dado.c_str());
+    wsm->setTll(simTime() + 0.01);
+    return wsm;
+}
+
+void TraCIDemo11p::createAndSendMessage (int to, int senderId, simtime_t beginTime = NULL) {
+    std::string dado = "Mensagem para o node " + std::to_string(to);
+    TraCIDemo11pMessage* wsm = createMessage(to, myId, dado);
+    if (beginTime == NULL) {
+        wsm->setBeginTime(simTime());
+    }
+    sendDown(wsm);
+//    std::cout << "## Enviado a mensagem para o " << to << endl;
+}
+
 void TraCIDemo11p::initialize(int stage)
 {
     DemoBaseApplLayer::initialize(stage);
@@ -35,6 +55,15 @@ void TraCIDemo11p::initialize(int stage)
         sentMessage = false;
         lastDroveAt = simTime();
         currentSubscribedServiceId = -1;
+        messageSendInterval = 20;
+        timeToSendMessage = simTime() + messageSendInterval;
+        rsuIds[0] = 16;
+        rsuIds[1] = 21;
+        rsuIds[2] = 41;
+        rsuIds[3] = 27;
+        rsuIds[4] = 31;
+        rsuIds[5] = 36;
+        rsuIds[6] = 46;
     }
 }
 
@@ -53,22 +82,22 @@ void TraCIDemo11p::onWSA(DemoServiceAdvertisment* wsa)
 void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
 {
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
-    std::cout << "## Recebi a mensagem: " << wsm->getDemoData() << " do node: " << wsm->getSenderAddress() << " no tempo: " << simTime() << endl;
-    std::cout << "## A mensagem é para o node: " << wsm->getSerial() << endl;
+//    std::cout << "## Sou o node " << myId << " e a mensagem é para o - " << wsm->getSerial() << endl;
     if ( myId == wsm->getSerial() ) {
-        std::cout << "## Sou o node " << myId << " e recebi a mensagem" << endl;
-    } else if ( simTime() > 155.001 ){
-        std::cout << "######## Acabou o tempo " << endl;
+        wsm->setEndTime(simTime());
+        simtime_t delay = wsm->getEndTime() - wsm->getBeginTime();
+//        string data = "ID: " + myId + " - delay: " + delay;
+        std::ofstream out("arquivo.txt");
+        out << myId + ' - ' + delay;
+        out.close();
+        std::cout << "## AQUI";
+//        std::cout << "## Sou o node " << myId << " e recebi a mensagem com tempo de atraso - " << delay << endl;
+    } else if ( simTime() > wsm->getTll() ){
+//        std::cout << "######## Acabou o tempo " << endl;
         return;
     } else {
-        TraCIDemo11pMessage* wsmNew = new TraCIDemo11pMessage();
-        populateWSM(wsmNew, -1);
-        wsmNew->setSerial(12);
-        wsmNew->setSenderAddress(myId);
-        std::string dado = "Mensagem para o node 12";
-        wsmNew->setDemoData(dado.c_str());
-        sendDown(wsmNew);
-        std::cout << "## Tentando reencaminhar para o node " << wsmNew->getSerial() << endl;
+        createAndSendMessage(wsm->getSerial(), myId, wsm->getBeginTime());
+//        std::cout << "## Tentando reencaminhar para o node " << wsm->getSerial() << endl;
     }
 }
 
@@ -96,16 +125,10 @@ void TraCIDemo11p::handleSelfMsg(cMessage* msg)
 void TraCIDemo11p::handlePositionUpdate(cObject* obj)
 {
     DemoBaseApplLayer::handlePositionUpdate(obj);
-    if (simTime() == 155) {
-        if (myId == 28) {
-            TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
-            populateWSM(wsm, -1);
-            wsm->setSerial(12);
-            wsm->setSenderAddress(myId);
-            std::string dado = "Mensagem para o node 12";
-            wsm->setDemoData(dado.c_str());
-            sendDown(wsm);
-            std::cout << "## Enviado a mensagem para o 12" << endl;
-        }
+
+    if (myId % 4 == 0 && simTime() == timeToSendMessage) {
+        int rsuId = rsuIds[rand() % 7];
+        createAndSendMessage(rsuId, myId, NULL);
+        timeToSendMessage = timeToSendMessage + messageSendInterval;
     }
 }

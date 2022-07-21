@@ -23,6 +23,10 @@
 #pragma once
 
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
+#include <stdlib.h>
+#include <iostream>
+#include <string>
+#include <fstream>
 
 namespace veins {
 

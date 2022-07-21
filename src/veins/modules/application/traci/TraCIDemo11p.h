@@ -22,7 +22,13 @@
 
 #pragma once
 
+#include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
+#include <cmath>
+#include <stdlib.h>
+#include <iostream>
+#include <string>
+#include <fstream>
 
 namespace veins {
 
@@ -48,6 +54,9 @@ protected:
     simtime_t lastDroveAt;
     bool sentMessage;
     int currentSubscribedServiceId;
+    int messageSendInterval;
+    simtime_t timeToSendMessage;
+    int rsuIds[7];
 
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;
@@ -55,6 +64,8 @@ protected:
 
     void handleSelfMsg(cMessage* msg) override;
     void handlePositionUpdate(cObject* obj) override;
+    TraCIDemo11pMessage* createMessage (int to, int senderId, std::string dado);
+    void createAndSendMessage (int to, int senderId, simtime_t beginTime);
 };
 
 } // namespace veins

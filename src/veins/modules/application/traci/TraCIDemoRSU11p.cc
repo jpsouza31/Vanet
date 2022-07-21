@@ -41,19 +41,9 @@ void TraCIDemoRSU11p::onWSM(BaseFrame1609_4* frame)
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
     if ( myId == wsm->getSerial() ) {
-            std::cout << "###### Sou o node " << myId << " e recebi a mensagem ######" << endl;
+        wsm->setEndTime(simTime());
+        simtime_t delay = wsm->getEndTime() - wsm->getBeginTime();
+        if (delay < 1)
+            std::cout << "###### Sou o node " << myId << " e recebi a mensagem com delay de ######" << delay << endl;
     }
-    //std::cout << "## Recebi a mensagem: " << wsm->getDemoData() << " do node: " << wsm->getSenderAddress() << " no tempo: " << simTime() << endl;
-    //for (int i = 0; i < 100000000; i++) {
-    //    if (i%10000000 == 0) {
-    //        std::cout << "## Processando tarefa" << endl;
-    //    }
-    //}
-    //std::cout << "## Enviando tarefa processada para " << wsm->getSenderAddress() << endl;
-    //TraCIDemo11pMessage* message = new TraCIDemo11pMessage();
-    //populateWSM(message, 28);
-    //message->setSenderAddress(myId);
-    //std::string dado = "Tarefa processada";
-    //message->setDemoData(dado.c_str());
-    //sendDown(message);
 }
